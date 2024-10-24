@@ -1,0 +1,10 @@
+{
+    "php.validate.executablePath": "C:/xampp/php/php.exe",
+    "editor.formatOnSave": true,
+    "files.associations": {
+        "*.php": "php",
+        "*.html": "html",
+        "*.css": "css",
+        "*.js": "javascript"
+    },
+}
