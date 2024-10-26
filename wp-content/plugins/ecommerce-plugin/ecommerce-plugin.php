@@ -690,4 +690,337 @@ function display_add_to_wishlist_button($product_id) {
     }
 }
 
+// Hook into the admin menu
+add_action('admin_menu', 'ecommerce_admin_menu');
+
+function ecommerce_admin_menu() {
+    // Product Management page
+    add_menu_page('Product Management', 'Products', 'manage_options', 'product-management', 'ecommerce_product_management_page', 'dashicons-products', 20);
+
+    // Order Management page
+    add_menu_page('Order Management', 'Orders', 'manage_options', 'order-management', 'ecommerce_order_management_page', 'dashicons-cart', 21);
+    // User Management page
+    add_menu_page('User Management', 'Users', 'manage_options', 'user-management', 'ecommerce_user_management_page', 'dashicons-admin-users', 22);
+}
+
+// Product Management Page
+function ecommerce_product_management_page() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'products';
+    
+    if (isset($_GET['action'])) {
+        // Handle Add, Edit, or Delete actions
+        if ($_GET['action'] == 'add') {
+            ecommerce_add_product_page();
+        } elseif ($_GET['action'] == 'edit' && isset($_GET['product_id'])) {
+            ecommerce_edit_product_page($_GET['product_id']);
+        } elseif ($_GET['action'] == 'delete' && isset($_GET['product_id'])) {
+            ecommerce_delete_product($_GET['product_id']);
+        }
+    } else {
+        // List all products
+        $products = $wpdb->get_results("SELECT * FROM $table_name");
+        ?>
+        <div class="wrap">
+            <h1>Product Management</h1>
+            <a href="?page=product-management&action=add" class="button button-primary">Add New Product</a>
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($products as $product) { ?>
+                        <tr>
+                            <td><?php echo esc_html($product->id); ?></td>
+                            <td><?php echo esc_html($product->name); ?></td>
+                            <td><?php echo esc_html($product->category); ?></td>
+                            <td><?php echo esc_html($product->price); ?></td>
+                            <td><?php echo esc_html($product->stock); ?></td>
+                            <td>
+                                <a href="?page=product-management&action=edit&product_id=<?php echo esc_attr($product->id); ?>">Edit</a> |
+                                <a href="?page=product-management&action=delete&product_id=<?php echo esc_attr($product->id); ?>">Delete</a>
+                            </td>
+                        </tr>
+                    <?php } ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+}
+
+function ecommerce_add_product_page() {
+    global $wpdb;
+    
+    if (isset($_POST['add_product'])) {
+        $wpdb->insert(
+            $wpdb->prefix . 'products',
+            array(
+                'name' => sanitize_text_field($_POST['name']),
+                'category' => sanitize_text_field($_POST['category']),
+                'price' => floatval($_POST['price']),
+                'stock' => intval($_POST['stock']),
+                'description' => sanitize_textarea_field($_POST['description']),
+                'image_url' => esc_url($_POST['image_url']),
+            )
+        );
+        echo '<div class="updated"><p>Product added successfully!</p></div>';
+    }
+    
+    // Add Product Form
+    ?>
+    <div class="wrap">
+        <h1>Add New Product</h1>
+        <form method="post">
+            <table class="form-table">
+                <tr>
+                    <th><label for="name">Product Name</label></th>
+                    <td><input type="text" name="name" required /></td>
+                </tr>
+                <tr>
+                    <th><label for="category">Category</label></th>
+                    <td><input type="text" name="category" required /></td>
+                </tr>
+                <tr>
+                    <th><label for="price">Price</label></th>
+                    <td><input type="number" name="price" step="0.01" required /></td>
+                </tr>
+                <tr>
+                    <th><label for="stock">Stock</label></th>
+                    <td><input type="number" name="stock" required /></td>
+                </tr>
+                <tr>
+                    <th><label for="description">Description</label></th>
+                    <td><textarea name="description"></textarea></td>
+                </tr>
+                <tr>
+                    <th><label for="image_url">Image URL</label></th>
+                    <td><input type="text" name="image_url" /></td>
+                </tr>
+            </table>
+            <input type="submit" name="add_product" value="Add Product" class="button button-primary" />
+        </form>
+    </div>
+    <?php
+}
+
+// Edit Product
+function ecommerce_edit_product_page($product_id) {
+    global $wpdb;
+    $product = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}products WHERE id = $product_id");
+
+    if (isset($_POST['update_product'])) {
+        $wpdb->update(
+            $wpdb->prefix . 'products',
+            array(
+                'name' => sanitize_text_field($_POST['name']),
+                'category' => sanitize_text_field($_POST['category']),
+                'price' => floatval($_POST['price']),
+                'stock' => intval($_POST['stock']),
+                'description' => sanitize_textarea_field($_POST['description']),
+                'image_url' => esc_url($_POST['image_url']),
+            ),
+            array('id' => $product_id)
+        );
+        echo '<div class="updated"><p>Product updated successfully!</p></div>';
+    }
+
+    // Edit Product Form
+    ?>
+    <div class="wrap">
+        <h1>Edit Product</h1>
+        <form method="post">
+            <table class="form-table">
+                <tr>
+                    <th><label for="name">Product Name</label></th>
+                    <td><input type="text" name="name" value="<?php echo esc_attr($product->name); ?>" required /></td>
+                </tr>
+                <tr>
+                    <th><label for="category">Category</label></th>
+                    <td><input type="text" name="category" value="<?php echo esc_attr($product->category); ?>" required /></td>
+                </tr>
+                <tr>
+                    <th><label for="price">Price</label></th>
+                    <td><input type="number" name="price" value="<?php echo esc_attr($product->price); ?>" step="0.01" required /></td>
+                </tr>
+                <tr>
+                    <th><label for="stock">Stock</label></th>
+                    <td><input type="number" name="stock" value="<?php echo esc_attr($product->stock); ?>" required /></td>
+                </tr>
+                <tr>
+                    <th><label for="description">Description</label></th>
+                    <td><textarea name="description"><?php echo esc_textarea($product->description); ?></textarea></td>
+                </tr>
+                <tr>
+                    <th><label for="image_url">Image URL</label></th>
+                    <td><input type="text" name="image_url" value="<?php echo esc_url($product->image_url); ?>" /></td>
+                </tr>
+            </table>
+            <input type="submit" name="update_product" value="Update Product" class="button button-primary" />
+        </form>
+    </div>
+    <?php
+}
+
+// Delete Product
+function ecommerce_delete_product($product_id) {
+    global $wpdb;
+    $wpdb->delete("{$wpdb->prefix}products", array('id' => $product_id));
+    echo '<div class="updated"><p>Product deleted successfully!</p></div>';
+}
+
+// Order Management Page
+function ecommerce_order_management_page() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'orders';
+    $orders = $wpdb->get_results("SELECT * FROM $table_name");
+
+    if (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_GET['order_id'])) {
+        // Handle order editing
+        ecommerce_edit_order_page(intval($_GET['order_id']));
+    } else {
+        // List all orders
+        ?>
+        <div class="wrap">
+            <h1>Order Management</h1>
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>User ID</th>
+                        <th>Product</th>
+                        <th>Status</th>
+                        <th>Total</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($orders as $order) { ?>
+                        <tr>
+                            <td><?php echo esc_html($order->id); ?></td>
+                            <td><?php echo esc_html($order->user_id); ?></td>
+                            <td><?php echo esc_html($order->product_name); ?></td>
+                            <td><?php echo esc_html($order->status); ?></td>
+                            <td><?php echo esc_html($order->total); ?></td>
+                            <td>
+                                <a href="?page=order-management&action=edit&order_id=<?php echo esc_attr($order->id); ?>">Edit</a> |
+                                <a href="?page=order-management&action=delete&order_id=<?php echo esc_attr($order->id); ?>">Delete</a>
+                            </td>
+                        </tr>
+                    <?php } ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+}
+
+// Function to display and process the Edit Order form
+function ecommerce_edit_order_page($order_id) {
+    global $wpdb;
+
+    // Fetch order details
+    $order = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}orders WHERE id = %d", $order_id));
+
+    if (!$order) {
+        echo '<div class="error"><p>Order not found.</p></div>';
+        return;
+    }
+
+    if (isset($_POST['save_order'])) {
+        // Sanitize form inputs
+        $status = sanitize_text_field($_POST['status']);
+        $total = floatval($_POST['total']);
+
+        // Update the order in the database
+        $wpdb->update(
+            $wpdb->prefix . 'orders',
+            array(
+                'status' => $status,
+                'total'  => $total,
+            ),
+            array('id' => $order_id),
+            array('%s', '%f'),
+            array('%d')
+        );
+
+        // Force redirect after saving
+        ob_start();
+        wp_redirect(admin_url('admin.php?page=order-management'));
+        exit;
+    }
+
+    // Display the form to edit the order
+    ?>
+    <div class="wrap">
+        <h1>Edit Order #<?php echo esc_html($order->id); ?></h1>
+        <form method="POST">
+            <table class="form-table">
+                <tr>
+                    <th><label for="status">Order Status</label></th>
+                    <td>
+                        <select name="status" id="status">
+                            <option value="processing" <?php selected($order->status, 'processing'); ?>>Processing</option>
+                            <option value="shipped" <?php selected($order->status, 'shipped'); ?>>Shipped</option>
+                            <option value="delivered" <?php selected($order->status, 'delivered'); ?>>Delivered</option>
+                            <option value="cancelled" <?php selected($order->status, 'cancelled'); ?>>Cancelled</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th><label for="total">Order Total</label></th>
+                    <td><input type="text" name="total" value="<?php echo esc_attr($order->total); ?>" /></td>
+                </tr>
+            </table>
+            <p class="submit">
+                <input type="submit" name="save_order" class="button button-primary" value="Save Changes">
+            </p>
+        </form>
+    </div>
+    <?php
+}
+
+// User Management Page
+function ecommerce_user_management_page() {
+    global $wpdb;
+    $users = get_users();
+
+    ?>
+    <div class="wrap">
+        <h1>User Management</h1>
+        <table class="wp-list-table widefat fixed striped">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($users as $user) { ?>
+                    <tr>
+                        <td><?php echo esc_html($user->ID); ?></td>
+                        <td><?php echo esc_html($user->user_login); ?></td>
+                        <td><?php echo esc_html($user->user_email); ?></td>
+                        <td><?php echo esc_html(implode(', ', $user->roles)); ?></td>
+                        <td>
+                            <a href="user-edit.php?user_id=<?php echo esc_attr($user->ID); ?>">Edit</a>
+                        </td>
+                    </tr>
+                <?php } ?>
+            </tbody>
+        </table>
+    </div>
+    <?php
+}
+
 ?>
