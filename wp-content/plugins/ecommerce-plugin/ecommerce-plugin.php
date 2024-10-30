@@ -24,12 +24,10 @@ function ecommerce_display_products() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'products';
 
-    // Get filter values
     $brand_filter = isset($_GET['brand']) ? sanitize_text_field($_GET['brand']) : '';
     $category_filter = isset($_GET['category']) ? sanitize_text_field($_GET['category']) : '';
     $price_filter = isset($_GET['price']) ? floatval($_GET['price']) : 0;
 
-    // Query based on filters
     $query = "SELECT * FROM $table_name WHERE 1=1";
     if ($brand_filter) {
         $query .= $wpdb->prepare(" AND brand = %s", $brand_filter);
@@ -43,11 +41,9 @@ function ecommerce_display_products() {
 
     $products = $wpdb->get_results($query);
 
-    // Start the layout container
     ob_start();
     echo '<div class="shop-container">';
 
-    // Filter form on the left side
     ?>
     <div class="filter-sidebar">
         <h2>Filter Products</h2>
@@ -69,7 +65,6 @@ function ecommerce_display_products() {
     </div>
     <?php
 
-    // Product display on the right side
     echo '<div class="product-grid">';
     if ($products) {
         foreach ($products as $product) {
@@ -83,10 +78,9 @@ function ecommerce_display_products() {
             echo '<p><strong>Category:</strong> ' . esc_html($product->category) . '</p>';
             echo '<p><strong>Rating:</strong> ' . esc_html($product->rating) . '/5</p>';
 
-            // Unified button container for both Add to Cart and Add to Wishlist
             echo '<div class="button-container">';
 
-            // Add to Cart button
+            
             echo '<form method="POST" action="" class="add-to-cart-form">';
             echo '<input type="hidden" name="product_id" value="' . esc_attr($product->id) . '">';
             echo '<label for="quantity">Quantity:</label>';
@@ -94,23 +88,22 @@ function ecommerce_display_products() {
             echo '<input type="submit" name="add_to_cart" value="Add to Cart" class="add-to-cart-button">';
             echo '</form>';
 
-            // Add to Wishlist button
-            display_add_to_wishlist_button($product->id); // <-- Call the wishlist button function here
+            
+            display_add_to_wishlist_button($product->id); 
 
-            echo '</div>'; // Close button container
+            echo '</div>'; 
 
-            echo '</div>'; // Close product card
+            echo '</div>'; 
         }
     } else {
         echo '<p>No products available.</p>';
     }
-    echo '</div>'; // Close product grid
+    echo '</div>'; 
 
-    echo '</div>'; // Close shop container
+    echo '</div>'; 
 
     return ob_get_clean();
 }
-// Create a shortcode to display the product catalog
 add_shortcode('product_catalog', 'ecommerce_display_products');
 
 function handle_add_to_wishlist() {
@@ -121,11 +114,11 @@ function handle_add_to_wishlist() {
         global $wpdb;
         $table_name = $wpdb->prefix . 'wishlist';
 
-        // Check if the product is already in the user's wishlist
+        
         $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE user_id = %d AND product_id = %d", $user_id, $product_id));
 
         if (!$exists) {
-            // Insert the product into the wishlist
+            
             $wpdb->insert(
                 $table_name,
                 array(
@@ -138,8 +131,8 @@ function handle_add_to_wishlist() {
                 )
             );
 
-            // Redirect to wishlist page or display success message
-            wp_redirect(home_url('/wishlist')); // Assuming you have a wishlist page
+            
+            wp_redirect(home_url('/wishlist')); 
             exit();
         } else {
             echo '<p>This product is already in your wishlist.</p>';
@@ -153,9 +146,9 @@ function display_wishlist() {
         $user_id = get_current_user_id();
         global $wpdb;
         $table_name = $wpdb->prefix . 'wishlist';
-        $products_table = $wpdb->prefix . 'products'; // Assuming your product table is named 'products'
+        $products_table = $wpdb->prefix . 'products'; 
 
-        // Query to get the wishlist items for the current user
+        
         $wishlist_items = $wpdb->get_results($wpdb->prepare("
             SELECT p.id, p.name, p.price, p.image_url
             FROM $table_name w
@@ -163,7 +156,7 @@ function display_wishlist() {
             WHERE w.user_id = %d
         ", $user_id));
 
-        // Display wishlist
+        
         if ($wishlist_items) {
             ob_start();
             echo '<div class="wishlist-container">';
@@ -198,7 +191,7 @@ function handle_remove_from_wishlist() {
         global $wpdb;
         $table_name = $wpdb->prefix . 'wishlist';
 
-        // Delete the product from the user's wishlist
+        
         $wpdb->delete(
             $table_name,
             array(
@@ -208,15 +201,15 @@ function handle_remove_from_wishlist() {
             array('%d', '%d')
         );
 
-        // Redirect to wishlist page
-        wp_redirect(home_url('/wishlist')); // Assuming you have a wishlist page
+        
+        wp_redirect(home_url('/wishlist')); 
         exit();
     }
 }
 add_action('init', 'handle_remove_from_wishlist');
 
 
-// Handling adding products to the cart and redirecting to the cart page
+
 function add_to_cart() {
     if (isset($_POST['add_to_cart'])) {
         $product_id = intval($_POST['product_id']);
@@ -243,14 +236,14 @@ function add_to_cart() {
             }
         }
         
-        // Redirect to Cart page after adding to cart
+        
         wp_redirect(home_url('/cart'));
         exit;
     }
 }
 add_action('init', 'add_to_cart');
 
-// Shortcode to display cart contents and allow quantity update
+
 function display_cart() {
     ob_start();
     if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
@@ -263,7 +256,7 @@ function display_cart() {
             echo '<td>' . esc_html($details['name']) . '</td>';
             echo '<td>$' . esc_html($details['price']) . '</td>';
             
-            // Quantity update form
+            
             echo '<td>';
             echo '<form method="POST" action="">';
             echo '<input type="hidden" name="update_product_id" value="' . esc_attr($product_id) . '">';
@@ -274,7 +267,7 @@ function display_cart() {
             
             echo '<td>$' . esc_html($details['total']) . '</td>';
             
-            // Remove product form
+            
             echo '<td>';
             echo '<form method="POST" action="">';
             echo '<input type="hidden" name="remove_product_id" value="' . esc_attr($product_id) . '">';
@@ -293,7 +286,7 @@ function display_cart() {
 }
 add_shortcode('cart_page', 'display_cart');
 
-// Handle quantity updates
+
 function update_cart_quantity() {
     if (isset($_POST['update_quantity'])) {
         $product_id = intval($_POST['update_product_id']);
@@ -304,14 +297,13 @@ function update_cart_quantity() {
             $_SESSION['cart'][$product_id]['total'] = $_SESSION['cart'][$product_id]['price'] * $quantity;
         }
         
-        // Redirect back to the cart page to refresh the data
         wp_redirect(home_url('/cart'));
         exit;
     }
 }
 add_action('init', 'update_cart_quantity');
 
-// Remove product from the cart
+
 function remove_from_cart() {
     if (isset($_POST['remove_from_cart'])) {
         $product_id = intval($_POST['remove_product_id']);
@@ -319,7 +311,7 @@ function remove_from_cart() {
             unset($_SESSION['cart'][$product_id]);
         }
         
-        // Redirect back to the cart page after removal
+        
         wp_redirect(home_url('/cart'));
         exit;
     }
@@ -327,7 +319,7 @@ function remove_from_cart() {
 add_action('init', 'remove_from_cart');
 
 
-// Display checkout details and collect shipping information
+
 function display_checkout() {
     ob_start();
     if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
@@ -335,8 +327,8 @@ function display_checkout() {
         foreach ($_SESSION['cart'] as $details) {
             $total += $details['total'];
         }
-        $tax = $total * 0.10; // Example tax calculation
-        $shipping = 20; // Default flat shipping rate
+        $tax = $total * 0.10; 
+        $shipping = 20; 
         $grand_total = $total + $tax + $shipping;
 
         ?>
@@ -354,7 +346,6 @@ function display_checkout() {
                 </select>
             </div>
 
-            <!-- Display the order summary -->
             <div class="order-summary">
                 <h3>Order Summary</h3>
                 <p>Total: $<?php echo number_format($total, 2); ?></p>
@@ -367,7 +358,6 @@ function display_checkout() {
             <input type="submit" name="complete_checkout" value="Complete Checkout">
         </form>
 
-        <!-- JavaScript to update the shipping cost and grand total dynamically -->
         <script>
             function updateShippingCost(shippingMethod) {
                 const total = <?php echo json_encode($total); ?>;
@@ -393,11 +383,10 @@ function display_checkout() {
 }
 add_shortcode('checkout_page', 'display_checkout');
 
-// Function to handle the checkout process
 function process_checkout() {
     if (isset($_POST['complete_checkout'])) {
-        // Sanitize inputs
-        $shipping_address = sanitize_text_field($_POST['shipping_address']);
+        
+        $shipping_address = sanitize_text_field($_POST['address']);
         $shipping_method = sanitize_text_field($_POST['shipping_method']);
         
         global $wpdb;
@@ -406,10 +395,10 @@ function process_checkout() {
 
         if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
             foreach ($_SESSION['cart'] as $product_id => $details) {
-                // Calculate total for each product
+                
                 $total = $details['quantity'] * $details['price'];
                 
-                // Insert order details into the orders table
+                
                 $wpdb->insert($table_name, array(
                     'user_id' => $current_user->ID,
                     'product_name' => $details['name'],
@@ -422,38 +411,39 @@ function process_checkout() {
                 ));
             }
 
-            // Prepare email content
+            
             $to = $current_user->user_email;
             $subject = 'Order Confirmation - BestLaptops';
             $headers = array('Content-Type: text/html; charset=UTF-8');
             $message = "<h1>Order Confirmation</h1>";
             $message .= "<p>Thank you for your order! Here are the details:</p>";
-            $message .= "<strong>Shipping Address:</strong> " . $shipping_address . "<br/>";
-            $message .= "<strong>Shipping Method:</strong> " . $shipping_method . "<br/>";
+            $message .= "<strong>Shipping Address:</strong> " . esc_html($shipping_address) . "<br/>";
+            $message .= "<strong>Shipping Method:</strong> " . esc_html($shipping_method) . "<br/>";
             $message .= "<h2>Order Summary:</h2>";
 
             foreach ($_SESSION['cart'] as $details) {
-                $message .= "<p><strong>Product:</strong> " . $details['name'] . "<br/>";
-                $message .= "<strong>Price:</strong> $" . number_format($details['price'], 2) . "<br/>";
-                $message .= "<strong>Quantity:</strong> " . $details['quantity'] . "<br/>";
-                $message .= "<strong>Total:</strong> $" . number_format($details['price'] * $details['quantity'], 2) . "</p><hr/>";
+                $message .= "<p><strong>Product:</strong> " . esc_html($details['name']) . "<br/>";
+                $message .= "<strong>Price:</strong> $" . esc_html(number_format($details['price'], 2)) . "<br/>";
+                $message .= "<strong>Quantity:</strong> " . esc_html($details['quantity']) . "<br/>";
+                $message .= "<strong>Total:</strong> $" . esc_html(number_format($details['price'] * $details['quantity'], 2)) . "</p><hr/>";
             }
 
-            $message .= "<p><strong>Grand Total:</strong> $" . number_format($_POST['grand_total'], 2) . "</p>";
+            $message .= "<p><strong>Grand Total:</strong> $" . esc_html(number_format($_POST['grand_total'], 2)) . "</p>";
 
-            // Send the email
+           
             wp_mail($to, $subject, $message, $headers);
 
-            // Clear the cart after successful checkout
+            
             unset($_SESSION['cart']);
 
-            // Redirect to the order confirmation page
+            
             wp_redirect(home_url('/order-confirmation'));
             exit;
         }
     }
 }
 add_action('init', 'process_checkout');
+
 function display_order_confirmation() {
     ob_start();
     echo '<h2>Order Confirmation</h2>';
@@ -464,49 +454,47 @@ add_shortcode('order_confirmation_page', 'display_order_confirmation');
 
 
 
+
 // Handle user registration
 function handle_user_registration() {
     if (isset($_POST['register'])) {
-        // Sanitize form values
+        
         $email = sanitize_email($_POST['email']);
         $password = sanitize_text_field($_POST['password']);
 
-        // Validate email
+        
         if (!is_email($email)) {
             echo '<p class="error-message">Please enter a valid email address.</p>';
             return;
         }
 
-        // Check if the email already exists
+       
         if (email_exists($email)) {
             echo '<p class="error-message">This email is already registered. Please try a different email.</p>';
             return;
         }
 
-        // Minimum password length validation
+        
         if (strlen($password) < 6) {
             echo '<p class="error-message">Password must be at least 6 characters long.</p>';
             return;
         }
 
-        // Register the user
         $user_id = wp_create_user($email, $password, $email);
 
         if (is_wp_error($user_id)) {
-            // Registration failed, display error message
             echo '<p class="error-message">' . $user_id->get_error_message() . '</p>';
         } else {
-            // Registration succeeded, log the user in
             wp_set_current_user($user_id);
             wp_set_auth_cookie($user_id);
-            wp_redirect(home_url('/profile')); // Redirect to profile page
+            wp_redirect(home_url('/profile')); 
             exit();
         }
     }
 }
 add_action('init', 'handle_user_registration');
 
-// Registration form shortcode
+
 function user_registration_form() {
     ob_start();
     ?>
@@ -527,21 +515,19 @@ function user_registration_form() {
         </form>
     </div>
     <?php
-    // Call the function to handle registration on form submission
+    
     handle_user_registration();
 
     return ob_get_clean();
 }
 add_shortcode('custom_registration', 'user_registration_form');
 
-// Handle user login
+
 function handle_user_login() {
     if (isset($_POST['login'])) {
-        // Sanitize form values
         $email = sanitize_email($_POST['email']);
         $password = sanitize_text_field($_POST['password']);
 
-        // Attempt to sign the user in
         $creds = array(
             'user_login' => $email,
             'user_password' => $password,
@@ -552,7 +538,6 @@ function handle_user_login() {
         if (is_wp_error($user)) {
             echo '<p class="error-message">' . $user->get_error_message() . '</p>';
         } else {
-            // Redirect to profile page after successful login
             wp_redirect(home_url('/profile'));
             exit();
         }
@@ -560,7 +545,7 @@ function handle_user_login() {
 }
 add_action('init', 'handle_user_login');
 
-// Login form shortcode
+
 function user_login_form() {
     ob_start();
     ?>
@@ -581,14 +566,13 @@ function user_login_form() {
         </form>
     </div>
     <?php
-    // Handle the login on form submission
     handle_user_login();
 
     return ob_get_clean();
 }
 add_shortcode('custom_login', 'user_login_form');
 
-// Handle profile update form
+
 function handle_profile_update() {
     if (is_user_logged_in() && isset($_POST['update_profile'])) {
         $current_user = wp_get_current_user();
@@ -610,7 +594,7 @@ function handle_profile_update() {
 }
 add_action('init', 'handle_profile_update');
 
-// Function to fetch past orders
+
 function get_user_orders($user_id) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'orders';
@@ -618,7 +602,7 @@ function get_user_orders($user_id) {
     return $wpdb->get_results($query);
 }
 
-// Profile form and past orders shortcode
+
 function user_profile_form() {
     if (is_user_logged_in()) {
         $current_user = wp_get_current_user();
@@ -650,7 +634,7 @@ function user_profile_form() {
             
             <h2>Your Past Orders</h2>
             <?php
-            // Fetch user orders
+            
             $orders = get_user_orders($current_user->ID);
             if ($orders) {
                 echo '<table class="orders-table">';
@@ -688,6 +672,340 @@ function display_add_to_wishlist_button($product_id) {
     } else {
         echo '<p><a href="' . wp_login_url() . '">Log in to add to wishlist</a></p>';
     }
+}
+
+
+add_action('admin_menu', 'ecommerce_admin_menu');
+
+function ecommerce_admin_menu() {
+    
+    add_menu_page('Product Management', 'Products', 'manage_options', 'product-management', 'ecommerce_product_management_page', 'dashicons-products', 20);
+
+    
+    add_menu_page('Order Management', 'Orders', 'manage_options', 'order-management', 'ecommerce_order_management_page', 'dashicons-cart', 21);
+    
+    add_menu_page('User Management', 'Users', 'manage_options', 'user-management', 'ecommerce_user_management_page', 'dashicons-admin-users', 22);
+}
+
+
+function ecommerce_product_management_page() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'products';
+    
+    if (isset($_GET['action'])) {
+        
+        if ($_GET['action'] == 'add') {
+            ecommerce_add_product_page();
+        } elseif ($_GET['action'] == 'edit' && isset($_GET['product_id'])) {
+            ecommerce_edit_product_page($_GET['product_id']);
+        } elseif ($_GET['action'] == 'delete' && isset($_GET['product_id'])) {
+            ecommerce_delete_product($_GET['product_id']);
+        }
+    } else {
+        
+        $products = $wpdb->get_results("SELECT * FROM $table_name");
+        ?>
+        <div class="wrap">
+            <h1>Product Management</h1>
+            <a href="?page=product-management&action=add" class="button button-primary">Add New Product</a>
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($products as $product) { ?>
+                        <tr>
+                            <td><?php echo esc_html($product->id); ?></td>
+                            <td><?php echo esc_html($product->name); ?></td>
+                            <td><?php echo esc_html($product->category); ?></td>
+                            <td><?php echo esc_html($product->price); ?></td>
+                            <td><?php echo esc_html($product->stock); ?></td>
+                            <td>
+                                <a href="?page=product-management&action=edit&product_id=<?php echo esc_attr($product->id); ?>">Edit</a> |
+                                <a href="?page=product-management&action=delete&product_id=<?php echo esc_attr($product->id); ?>">Delete</a>
+                            </td>
+                        </tr>
+                    <?php } ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+}
+
+function ecommerce_add_product_page() {
+    global $wpdb;
+    
+    if (isset($_POST['add_product'])) {
+        $wpdb->insert(
+            $wpdb->prefix . 'products',
+            array(
+                'name' => sanitize_text_field($_POST['name']),
+                'category' => sanitize_text_field($_POST['category']),
+                'price' => floatval($_POST['price']),
+                'stock' => intval($_POST['stock']),
+                'description' => sanitize_textarea_field($_POST['description']),
+                'image_url' => esc_url($_POST['image_url']),
+            )
+        );
+        echo '<div class="updated"><p>Product added successfully!</p></div>';
+    }
+    
+  
+    ?>
+    <div class="wrap">
+        <h1>Add New Product</h1>
+        <form method="post">
+            <table class="form-table">
+                <tr>
+                    <th><label for="name">Product Name</label></th>
+                    <td><input type="text" name="name" required /></td>
+                </tr>
+                <tr>
+                    <th><label for="category">Category</label></th>
+                    <td><input type="text" name="category" required /></td>
+                </tr>
+                <tr>
+                    <th><label for="price">Price</label></th>
+                    <td><input type="number" name="price" step="0.01" required /></td>
+                </tr>
+                <tr>
+                    <th><label for="stock">Stock</label></th>
+                    <td><input type="number" name="stock" required /></td>
+                </tr>
+                <tr>
+                    <th><label for="description">Description</label></th>
+                    <td><textarea name="description"></textarea></td>
+                </tr>
+                <tr>
+                    <th><label for="image_url">Image URL</label></th>
+                    <td><input type="text" name="image_url" /></td>
+                </tr>
+            </table>
+            <input type="submit" name="add_product" value="Add Product" class="button button-primary" />
+        </form>
+    </div>
+    <?php
+}
+
+
+function ecommerce_edit_product_page($product_id) {
+    global $wpdb;
+    $product = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}products WHERE id = $product_id");
+
+    if (isset($_POST['update_product'])) {
+        $wpdb->update(
+            $wpdb->prefix . 'products',
+            array(
+                'name' => sanitize_text_field($_POST['name']),
+                'category' => sanitize_text_field($_POST['category']),
+                'price' => floatval($_POST['price']),
+                'stock' => intval($_POST['stock']),
+                'description' => sanitize_textarea_field($_POST['description']),
+                'image_url' => esc_url($_POST['image_url']),
+            ),
+            array('id' => $product_id)
+        );
+        echo '<div class="updated"><p>Product updated successfully!</p></div>';
+    }
+
+    
+    ?>
+    <div class="wrap">
+        <h1>Edit Product</h1>
+        <form method="post">
+            <table class="form-table">
+                <tr>
+                    <th><label for="name">Product Name</label></th>
+                    <td><input type="text" name="name" value="<?php echo esc_attr($product->name); ?>" required /></td>
+                </tr>
+                <tr>
+                    <th><label for="category">Category</label></th>
+                    <td><input type="text" name="category" value="<?php echo esc_attr($product->category); ?>" required /></td>
+                </tr>
+                <tr>
+                    <th><label for="price">Price</label></th>
+                    <td><input type="number" name="price" value="<?php echo esc_attr($product->price); ?>" step="0.01" required /></td>
+                </tr>
+                <tr>
+                    <th><label for="stock">Stock</label></th>
+                    <td><input type="number" name="stock" value="<?php echo esc_attr($product->stock); ?>" required /></td>
+                </tr>
+                <tr>
+                    <th><label for="description">Description</label></th>
+                    <td><textarea name="description"><?php echo esc_textarea($product->description); ?></textarea></td>
+                </tr>
+                <tr>
+                    <th><label for="image_url">Image URL</label></th>
+                    <td><input type="text" name="image_url" value="<?php echo esc_url($product->image_url); ?>" /></td>
+                </tr>
+            </table>
+            <input type="submit" name="update_product" value="Update Product" class="button button-primary" />
+        </form>
+    </div>
+    <?php
+}
+
+
+function ecommerce_delete_product($product_id) {
+    global $wpdb;
+    $wpdb->delete("{$wpdb->prefix}products", array('id' => $product_id));
+    echo '<div class="updated"><p>Product deleted successfully!</p></div>';
+}
+
+
+function ecommerce_order_management_page() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'orders';
+    $orders = $wpdb->get_results("SELECT * FROM $table_name");
+
+    if (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_GET['order_id'])) {
+        
+        ecommerce_edit_order_page(intval($_GET['order_id']));
+    } else {
+        
+        ?>
+        <div class="wrap">
+            <h1>Order Management</h1>
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>User ID</th>
+                        <th>Product</th>
+                        <th>Status</th>
+                        <th>Total</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($orders as $order) { ?>
+                        <tr>
+                            <td><?php echo esc_html($order->id); ?></td>
+                            <td><?php echo esc_html($order->user_id); ?></td>
+                            <td><?php echo esc_html($order->product_name); ?></td>
+                            <td><?php echo esc_html($order->status); ?></td>
+                            <td><?php echo esc_html($order->total); ?></td>
+                            <td>
+                                <a href="?page=order-management&action=edit&order_id=<?php echo esc_attr($order->id); ?>">Edit</a> |
+                                <a href="?page=order-management&action=delete&order_id=<?php echo esc_attr($order->id); ?>">Delete</a>
+                            </td>
+                        </tr>
+                    <?php } ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+}
+
+
+function ecommerce_edit_order_page($order_id) {
+    global $wpdb;
+
+    
+    $order = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}orders WHERE id = %d", $order_id));
+
+    if (!$order) {
+        echo '<div class="error"><p>Order not found.</p></div>';
+        return;
+    }
+
+    if (isset($_POST['save_order'])) {
+        
+        $status = sanitize_text_field($_POST['status']);
+        $total = floatval($_POST['total']);
+
+        
+        $wpdb->update(
+            $wpdb->prefix . 'orders',
+            array(
+                'status' => $status,
+                'total'  => $total,
+            ),
+            array('id' => $order_id),
+            array('%s', '%f'),
+            array('%d')
+        );
+
+        
+        ob_start();
+        wp_redirect(admin_url('admin.php?page=order-management'));
+        exit;
+    }
+
+    
+    
+    ?>
+    <div class="wrap">
+        <h1>Edit Order #<?php echo esc_html($order->id); ?></h1>
+        <form method="POST">
+            <table class="form-table">
+                <tr>
+                    <th><label for="status">Order Status</label></th>
+                    <td>
+                        <select name="status" id="status">
+                            <option value="processing" <?php selected($order->status, 'processing'); ?>>Processing</option>
+                            <option value="shipped" <?php selected($order->status, 'shipped'); ?>>Shipped</option>
+                            <option value="delivered" <?php selected($order->status, 'delivered'); ?>>Delivered</option>
+                            <option value="cancelled" <?php selected($order->status, 'cancelled'); ?>>Cancelled</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th><label for="total">Order Total</label></th>
+                    <td><input type="text" name="total" value="<?php echo esc_attr($order->total); ?>" /></td>
+                </tr>
+            </table>
+            <p class="submit">
+                <input type="submit" name="save_order" class="button button-primary" value="Save Changes">
+            </p>
+        </form>
+    </div>
+    <?php
+}
+
+
+function ecommerce_user_management_page() {
+    global $wpdb;
+    $users = get_users();
+
+    ?>
+    <div class="wrap">
+        <h1>User Management</h1>
+        <table class="wp-list-table widefat fixed striped">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($users as $user) { ?>
+                    <tr>
+                        <td><?php echo esc_html($user->ID); ?></td>
+                        <td><?php echo esc_html($user->user_login); ?></td>
+                        <td><?php echo esc_html($user->user_email); ?></td>
+                        <td><?php echo esc_html(implode(', ', $user->roles)); ?></td>
+                        <td>
+                            <a href="user-edit.php?user_id=<?php echo esc_attr($user->ID); ?>">Edit</a>
+                        </td>
+                    </tr>
+                <?php } ?>
+            </tbody>
+        </table>
+    </div>
+    <?php
 }
 
 ?>
