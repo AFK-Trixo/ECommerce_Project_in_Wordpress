@@ -393,11 +393,10 @@ function display_checkout() {
 }
 add_shortcode('checkout_page', 'display_checkout');
 
-// Function to handle the checkout process
 function process_checkout() {
     if (isset($_POST['complete_checkout'])) {
         // Sanitize inputs
-        $shipping_address = sanitize_text_field($_POST['shipping_address']);
+        $shipping_address = sanitize_text_field($_POST['address']);
         $shipping_method = sanitize_text_field($_POST['shipping_method']);
         
         global $wpdb;
@@ -428,18 +427,18 @@ function process_checkout() {
             $headers = array('Content-Type: text/html; charset=UTF-8');
             $message = "<h1>Order Confirmation</h1>";
             $message .= "<p>Thank you for your order! Here are the details:</p>";
-            $message .= "<strong>Shipping Address:</strong> " . $shipping_address . "<br/>";
-            $message .= "<strong>Shipping Method:</strong> " . $shipping_method . "<br/>";
+            $message .= "<strong>Shipping Address:</strong> " . esc_html($shipping_address) . "<br/>";
+            $message .= "<strong>Shipping Method:</strong> " . esc_html($shipping_method) . "<br/>";
             $message .= "<h2>Order Summary:</h2>";
 
             foreach ($_SESSION['cart'] as $details) {
-                $message .= "<p><strong>Product:</strong> " . $details['name'] . "<br/>";
-                $message .= "<strong>Price:</strong> $" . number_format($details['price'], 2) . "<br/>";
-                $message .= "<strong>Quantity:</strong> " . $details['quantity'] . "<br/>";
-                $message .= "<strong>Total:</strong> $" . number_format($details['price'] * $details['quantity'], 2) . "</p><hr/>";
+                $message .= "<p><strong>Product:</strong> " . esc_html($details['name']) . "<br/>";
+                $message .= "<strong>Price:</strong> $" . esc_html(number_format($details['price'], 2)) . "<br/>";
+                $message .= "<strong>Quantity:</strong> " . esc_html($details['quantity']) . "<br/>";
+                $message .= "<strong>Total:</strong> $" . esc_html(number_format($details['price'] * $details['quantity'], 2)) . "</p><hr/>";
             }
 
-            $message .= "<p><strong>Grand Total:</strong> $" . number_format($_POST['grand_total'], 2) . "</p>";
+            $message .= "<p><strong>Grand Total:</strong> $" . esc_html(number_format($_POST['grand_total'], 2)) . "</p>";
 
             // Send the email
             wp_mail($to, $subject, $message, $headers);
@@ -454,6 +453,7 @@ function process_checkout() {
     }
 }
 add_action('init', 'process_checkout');
+
 function display_order_confirmation() {
     ob_start();
     echo '<h2>Order Confirmation</h2>';
@@ -461,6 +461,7 @@ function display_order_confirmation() {
     return ob_get_clean();
 }
 add_shortcode('order_confirmation_page', 'display_order_confirmation');
+
 
 
 
